@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Architext AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        /* Reset & Layout */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; width: 100%; }
+
+        :root {
+            --primary-blue: #0A3D62;
+            --secondary-blue: #1C6589;
+            --accent-gold: #FFD700;
+            --light-gray: #ECF0F1;
+            --dark-text: #2C3E50;
+            --bot-bubble: rgba(200, 230, 200, 0.8);
+            --user-bubble: rgba(255, 220, 230, 0.8);
+            --input-bg: rgba(255, 255, 255, 0.6);
+            --input-border: #90CAF9;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+            display: block;
+            overflow-y: auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .container {
+            width: 100%;
+            min-height: 100vh;
+            background: transparent;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 3;
+        }
+
+        .header {
+            background: linear-gradient(90deg, var(--primary-blue), var(--secondary-blue));
+            color: var(--light-gray);
+            padding: 12.5px 40px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-logo {
+            height: 175px;
+            width: auto;
+            display: block;
+            filter: drop-shadow(0 0 8px rgba(255,255,255,0.5));
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 100%; height: 5px;
+            background: linear-gradient(90deg, var(--accent-gold), transparent);
+            opacity: 0.7;
+        }
+
+        #chatbox {
+            padding: 30px;
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            background: url('/static/images/interior+drawing+courses.jpg') no-repeat center center;
+            background-size: cover;
+            position: relative;
+        }
+
+        #chatbox::-webkit-scrollbar {
+            width: 8px;
+        }
+        #chatbox::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+        #chatbox::-webkit-scrollbar-thumb {
+            background: var(--secondary-blue);
+            border-radius: 10px;
+        }
+        #chatbox::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-blue);
+        }
+
+        .bot, .user {
+            max-width: 75%;
+            padding: 18px 25px;
+            border-radius: 25px;
+            line-height: 1.7;
+            backdrop-filter: blur(8px);
+            font-weight: 400;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        .bot {
+            align-self: flex-start;
+            background: var(--bot-bubble);
+            color: var(--dark-text);
+            border-left: 6px solid var(--accent-gold);
+            transform-origin: bottom left;
+        }
+
+        .user {
+            align-self: flex-end;
+            background: var(--user-bubble);
+            color: var(--dark-text);
+            border-right: 6px solid #C2185B;
+            transform-origin: bottom right;
+        }
+
+        .bot:hover { transform: translateX(8px) scale(1.02); }
+        .user:hover { transform: translateX(-8px) scale(1.02); }
+
+        @keyframes slideInLeft {
+            0% { transform: translateX(-60px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideInRight {
+            0% { transform: translateX(60px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        .bot.slide-in { animation: slideInLeft 0.5s ease-out forwards; }
+        .user.slide-in { animation: slideInRight 0.5s ease-out forwards; }
+
+        #chat-form {
+            display: flex;
+            padding: 25px;
+            background: rgba(236,239,241,0.9);
+            border-top: 1px solid rgba(255,255,255,0.3);
+            gap: 15px;
+        }
+
+        #message {
+            flex-grow: 1;
+            padding: 16px;
+            font-size: 1.05rem;
+            border: 1px solid var(--input-border);
+            border-radius: 12px;
+            background: var(--input-bg);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        #message:focus {
+            border-color: var(--secondary-blue);
+            box-shadow: 0 0 0 4px rgba(28, 101, 137, 0.4);
+            background: white;
+        }
+
+        #send-btn {
+            padding: 16px 28px;
+            background: linear-gradient(135deg, var(--secondary-blue), var(--primary-blue));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #send-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        #loading {
+            text-align: center;
+            color: #607D8B;
+            font-size: 16px;
+            padding-bottom: 15px;
+            display: none;
+            font-style: italic;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        #actions {
+            text-align: center;
+            padding: 20px;
+            background: rgba(236, 239, 241, 0.8);
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        #actions button {
+            padding: 14px 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        #generate-proposal-btn {
+            background: linear-gradient(90deg, #81C784, #4CAF50);
+            color: white;
+        }
+
+        #generate-proposal-btn:hover {
+            background: linear-gradient(90deg, #66BB6A, #388E3C);
+            transform: translateY(-2px);
+        }
+
+        #download-pdf-btn {
+            background: linear-gradient(90deg, #64B5F6, #2196F3);
+            color: white;
+            display: none;
+        }
+
+        #download-pdf-btn:hover {
+            background: linear-gradient(90deg, #42A5F5, #1976D2);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="/static/images/Architext_AI.-removebg-preview.png" alt="Architext AI Logo" class="header-logo">
+        </div>
+
+        <div id="chatbox">
+            <div class="bot slide-in">✍️ <strong>Architext AI:</strong> 👋 Hello! I'm your Architecture Assistant. Let's begin! What is your name?</div>
+        </div>
+
+        <form id="chat-form">
+            <input type="text" id="message" placeholder="Type your response..." autocomplete="off" required />
+            <button type="submit" id="send-btn">Send</button>
+        </form>
+
+        <div id="loading">⏳ Thinking...</div>
+
+        <div id="actions">
+            <button id="generate-proposal-btn">📄 Generate Proposal</button>
+            <button id="download-pdf-btn">⬇️ Download PDF</button>
+        </div>
+
+        <div id="download"></div>
+        <div id="reset"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('chat-form');
+        const input = document.getElementById('message');
+        const chatbox = document.getElementById('chatbox');
+        const loading = document.getElementById('loading');
+        const downloadDiv = document.getElementById('download');
+        const resetDiv = document.getElementById('reset');
+
+        function addMessageWithAnimation(text, className, speaker) {
+            return new Promise((resolve) => {
+                const msg = document.createElement('div');
+                msg.classList.add(className);
+
+                let formattedText = '';
+                if (speaker === 'user') {
+                    formattedText = `👤 <strong>You:</strong> ${text}`;
+                } else if (speaker === 'bot') {
+                    formattedText = `✍️ <strong>Architext AI:</strong> ${text}`;
+                } else {
+                    formattedText = text;
+                }
+
+                setTimeout(() => {
+                    msg.classList.add('slide-in');
+                    msg.innerHTML = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    chatbox.appendChild(msg);
+                    chatbox.scrollTop = chatbox.scrollHeight;
+                    resolve();
+                }, 100);
+            });
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            input.value = "";
+            await addMessageWithAnimation(msg, 'user', 'user');
+
+            loading.style.display = "block";
+
+            try {
+                const res = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+
+                const data = await res.json();
+                loading.style.display = "none";
+
+                setTimeout(async () => {
+                    await addMessageWithAnimation(data.reply, 'bot', 'bot');
+                }, 700);
+
+            } catch (error) {
+                console.error("Error during chat:", error);
+                loading.style.display = "none";
+                setTimeout(() => {
+                    addMessageWithAnimation("Oops! Something went wrong. Please try again.", 'bot', 'bot');
+                }, 700);
+            }
+        });
+
+        document.getElementById('generate-proposal-btn').addEventListener('click', async () => {
+            loading.style.display = "block";
+            try {
+                const res = await fetch('/generate_proposal', { method: 'POST' });
+                const data = await res.json();
+                loading.style.display = "none";
+                await addMessageWithAnimation(data.reply, 'bot', 'bot');
+                document.getElementById('download-pdf-btn').style.display = 'inline-block';
+            } catch (error) {
+                loading.style.display = "none";
+                console.error(error);
+                await addMessageWithAnimation("⚠️ Failed to generate proposal. Try again.", 'bot', 'bot');
+            }
+        });
+
+        document.getElementById('download-pdf-btn').addEventListener('click', async () => {
+            loading.style.display = "block";
+            try {
+                const res = await fetch('/generate_pdf', { method: 'POST' });
+                const data = await res.json();
+                loading.style.display = "none";
+                await addMessageWithAnimation(data.reply, 'bot', 'bot');
+
+                if (data.pdf_url) {
+                    downloadDiv.innerHTML = `<a href="${data.pdf_url}" target="_blank">📄 Click here to download your PDF</a>`;
+                }
+            } catch (error) {
+                loading.style.display = "none";
+                console.error(error);
+                await addMessageWithAnimation("⚠️ Failed to generate PDF. Try again.", 'bot', 'bot');
+            }
+        });
+
+        window.onload = () => {
+            // initial bot message already in HTML
+        };
+    </script>
+</body>
+</html>
