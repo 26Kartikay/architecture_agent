@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify, send_file, session
 from agent import ask_ollama, generate_pdf
 import secrets
-import os
+
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(32)
 
@@ -64,13 +64,20 @@ def chat():
         f"**Crucial Constraints:**\n"
         f"- **DO NOT** repeat questions that have already been asked or clearly implied by the conversation history.\n"
         f"- **DO NOT** introduce or hint at the next topic in the overall sequence. Focus entirely on exhaustively understanding the current topic.\n"
-        f"- **Your response MUST ONLY be the single question itself.** Do not include any introductory phrases (e.g., 'My next question is...', 'Regarding this topic...', etc.)\n\n"
+        f"- **DO NOT** include any internal reasoning, explanation, or thought process.\n"
+        f"- **Your response MUST ONLY be the single question itself.**\n\n"
         f"**Current Conversation Context (Last 10 turns for relevance):**\n"
         f"```\n{chat_context}\n```\n\n"
-        f"**Next Question (Only the question itself):**"
+        f"Important: Only output the final question. Do NOT include any internal reasoning, explanations, or thought process. Your response must ONLY be the single question, without any other content.\n\n"
+        f"Question:"
     )
 
     bot_reply = ask_ollama(prompt)
+
+    # Fallback cleanup if reasoning still leaks in
+    if bot_reply.count("?") >= 1:
+        bot_reply = bot_reply.strip().split("?")[-2].split("\n")[-1].strip() + "?"
+
     conversation.append({"role": "assistant", "content": bot_reply})
     session['conversation'] = conversation
 
@@ -117,5 +124,4 @@ def download():
     return send_file(pdf_name, as_attachment=True)
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
-
+    app.run(debug=True)

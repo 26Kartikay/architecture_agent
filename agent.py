@@ -21,33 +21,41 @@ HF_API_TOKEN = os.getenv("HF_TOKEN")
 MODEL_NAME = "Qwen/Qwen3-32B"
 
 if not HF_API_TOKEN:
-    logging.error("❌ HF_TOKEN is not set in .env or environment variables.")
+    logging.error("HF_TOKEN is not set in .env or environment variables.")
 else:
-    logging.info("✅ HF_TOKEN loaded successfully.")
+    logging.info("HF_TOKEN loaded successfully.")
 
 # Initialize Inference Client
 try:
     client = InferenceClient(provider="hf-inference", api_key=HF_API_TOKEN)
-    logging.info(f"✅ InferenceClient initialized for model: {MODEL_NAME}")
+    logging.info(f"InferenceClient initialized for model: {MODEL_NAME}")
 except Exception as e:
-    logging.exception("❌ Failed to initialize InferenceClient")
+    logging.exception("Failed to initialize InferenceClient")
 
 def ask_ollama(prompt: str) -> str:
-    logging.debug(f"📨 Prompt sent: {prompt[:200]}...")
+    logging.debug(f"Prompt sent: {prompt[:200]}...")
     try:
         completion = client.chat.completions.create(
             model=MODEL_NAME,
             messages=[{"role": "user", "content": prompt}],
         )
         reply = completion.choices[0].message.content.strip()
-        logging.debug(f"✅ Model response: {reply[:200]}...")
-        return reply
+
+        # Clean response to extract the last valid question if needed
+        if reply.count("?") >= 1:
+            cleaned_reply = reply.strip().split("?")[-2].split("\n")[-1].strip() + "?"
+        else:
+            cleaned_reply = reply
+
+        logging.debug(f"Model response (cleaned): {cleaned_reply[:200]}...")
+        return cleaned_reply
+
     except Exception as e:
-        logging.exception("❌ Error during model inference")
+        logging.exception("Error during model inference")
         return f"Error: {str(e)}"
 
 def generate_pdf(proposal_text: str, filename: str = "architecture_proposal.pdf", client_name: str = "Client") -> str:
-    logging.info(f"📄 Generating PDF: {filename}")
+    logging.info(f"Generating PDF: {filename}")
     try:
         doc = SimpleDocTemplate(
             filename,
@@ -91,9 +99,9 @@ def generate_pdf(proposal_text: str, filename: str = "architecture_proposal.pdf"
         story.append(Spacer(1, 0.5 * inch))
         story.append(Paragraph(f"Sincerely,<br/>{client_name}<br/>Architectural Assistant", body_style))
         doc.build(story)
-        logging.info("✅ PDF generation completed.")
+        logging.info("PDF generation completed.")
         return filename
 
     except Exception as e:
-        logging.exception("❌ Failed to generate PDF")
+        logging.exception("Failed to generate PDF")
         return "Error generating PDF"
