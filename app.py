@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify, send_file, session
 from agent import ask_ollama, generate_pdf
 import secrets
-
+import os
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(32)
 
