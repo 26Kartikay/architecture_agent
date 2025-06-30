@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, send_file, session
 from agent import ask_ollama, generate_pdf
 import secrets
+import os
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(32)
@@ -124,4 +125,5 @@ def download():
     return send_file(pdf_name, as_attachment=True)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
+
