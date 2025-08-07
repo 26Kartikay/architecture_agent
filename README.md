@@ -28,23 +28,6 @@ This project is an **AI-powered Architectural Assistant** designed to streamline
 ---
 
 ## Project Structure
-├── .env (create this file for your HF_TOKEN)
-├── pycache/
-├── archagent/
-│   ├── init.py
-│   └── (other potential modules if expanded)
-├── static/
-│   ├── css/
-│   │   └── style.css (presumed, for chat UI)
-│   └── js/
-│       └── script.js (presumed, for chat UI)
-├── templates/
-│   └── chat.html
-├── agent.py
-├── app.py
-├── requirements.txt
-└── README.md
-
 * `app.py`: The main Flask application, handling routes, user interaction, and session management. It orchestrates the conversation flow and calls `agent.py` for AI inference and PDF generation.
 * `agent.py`: Contains the core logic for interacting with the Hugging Face Inference Client (`ask_ollama` function) and generating PDF documents (`generate_pdf` function).
 * `requirements.txt`: Lists all Python dependencies required for the project.
